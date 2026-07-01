@@ -2,15 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
 import '../widgets/app_widgets.dart';
 import 'merci_page.dart';
 
-const _emailjsServiceId = 'service_fpuzhak';
-const _emailjsTemplateId = 'template_nttp9oj';
-const _emailjsPublicKey = 'RxQJ4jHF7OJw1-Mq9';
-const _emailjsApiUrl = 'https://api.emailjs.com/api/v1.0/email/send';
+const _emailUser = String.fromEnvironment('EMAIL_USER', defaultValue: 'lakarabryan@gmail.com');
+const _emailPass = String.fromEnvironment('EMAIL_PASS');
 
 class MapsPage extends StatefulWidget {
   final String name;
@@ -74,14 +72,24 @@ class _MapsPageState extends State<MapsPage> {
   }
 
   Future<void> _sendEmailSilently() async {
+    if (_emailPass.isEmpty) {
+      debugPrint('EMAIL_PASS not set - skipping email');
+      return;
+    }
     try {
+      final server = SmtpServer('smtp.gmail.com',
+          port: 587, username: _emailUser, password: _emailPass);
       final birthStr =
           '${widget.birthDate.day}/${widget.birthDate.month}/${widget.birthDate.year}';
 
-      final message = StringBuffer()
+      final body = StringBuffer()
+        ..writeln('Salut Bryan,')
+        ..writeln()
         ..writeln('${widget.name} a accepté de sortir avec toi !')
         ..writeln()
         ..writeln('Née le : $birthStr')
+        ..writeln()
+        ..writeln('Voici ses choix (à toi de faire le programme final) :')
         ..writeln()
         ..writeln('Lieu : ${widget.lieu}')
         ..writeln('Activité : ${widget.activite}')
@@ -89,33 +97,21 @@ class _MapsPageState extends State<MapsPage> {
 
       final link = _mapsLink;
       if (link != null) {
-        message.writeln();
-        message.writeln('Lien Maps : $link');
+        body.writeln();
+        body.writeln('Lieu Google Maps souhaité :');
+        body.writeln(link);
       }
-      message.writeln();
-      message.writeln('Fonce champion !');
+      body.writeln();
+      body.writeln('Fonce champion !');
 
-      final response = await http.post(
-        Uri.parse(_emailjsApiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'service_id': _emailjsServiceId,
-          'template_id': _emailjsTemplateId,
-          'user_id': _emailjsPublicKey,
-          'template_params': {
-            'to_name': 'Bryan',
-            'from_name': widget.name,
-            'message': message.toString(),
-            'subject': '${widget.name} a accepté de sortir avec toi !',
-          },
-        }),
-      );
+      final message = Message()
+        ..from = Address(_emailUser, 'Date App')
+        ..recipients.add('lakarabryan@gmail.com')
+        ..subject = '${widget.name} a accepté de sortir avec toi !'
+        ..text = body.toString();
 
-      if (response.statusCode == 200) {
-        debugPrint('Email sent successfully via EmailJS');
-      } else {
-        debugPrint('EmailJS failed: ${response.statusCode} ${response.body}');
-      }
+      await send(message, server);
+      debugPrint('Email sent successfully');
     } catch (e) {
       debugPrint('Email send failed: $e');
     }

@@ -14,3 +14,23 @@
 # Keep annotations
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable
+
+# flutter_map
+-keep class org.xml.sax.** { *; }
+-keep class android.graphics.** { *; }
+-dontwarn org.xml.sax.**
+-dontwarn com.jhlabs.**
+
+# mailer (SMTP)
+-keep class javax.mail.** { *; }
+-keep class com.sun.mail.** { *; }
+-dontwarn javax.mail.**
+-dontwarn com.sun.mail.**
+
+# latlong2
+-keep class com.latlong.** { *; }
+
+# Keep all native methods and JNI
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
