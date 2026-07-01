@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../widgets/app_widgets.dart';
 import 'selection_page.dart';
@@ -166,30 +167,29 @@ class _QuestionPageState extends State<QuestionPage>
                             ),
                           ),
                           const SizedBox(height: 16),
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOut,
-                            left: _noX,
-                            top: _noY,
-                            child: SizedBox(
-                              width: _btnW,
-                              height: _btnH,
-                              child: ElevatedButton.icon(
-                                onPressed: null,
-                                icon: const Icon(Icons.close),
-                                label: const Text('NON'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.grey.shade200,
-                                  foregroundColor: Colors.grey.shade500,
-                                  disabledBackgroundColor: Colors.grey.shade200,
-                                  disabledForegroundColor: Colors.grey.shade500,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(24)),
-                                ),
-                              ),
-                            ),
-                          ),
+                          SizedBox(width: _btnW, height: _btnH),
                         ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: _noX,
+                    top: _noY,
+                    child: SizedBox(
+                      width: _btnW,
+                      height: _btnH,
+                      child: ElevatedButton.icon(
+                        onPressed: null,
+                        icon: const Icon(Icons.close),
+                        label: const Text('NON'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade200,
+                          foregroundColor: Colors.grey.shade500,
+                          disabledBackgroundColor: Colors.grey.shade200,
+                          disabledForegroundColor: Colors.grey.shade500,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24)),
+                        ),
                       ),
                     ),
                   ),
@@ -202,24 +202,27 @@ class _QuestionPageState extends State<QuestionPage>
     );
   }
 
+  final _rng = Random();
+  double _lastPx = 0, _lastPy = 0;
+
   void _move(double px, double py, Size s) {
-    final dist =
-        ((px - _noX - _btnW / 2).abs() + (py - _noY - _btnH / 2).abs());
-    if (dist < 250) {
-      setState(() {
-        double nx, ny;
-        int att = 0;
-        do {
-          final seed = DateTime.now().microsecondsSinceEpoch;
-          nx = (s.width - _btnW) *
-              (0.05 + 0.9 * ((seed + att) % 1000) / 1000);
-          ny = (s.height - _btnH) *
-              (0.05 + 0.9 * ((seed + 500 + att) % 1000) / 1000);
-          att++;
-        } while (att < 10 && ((nx - px).abs() + (ny - py).abs()) < 300);
-        _noX = nx.clamp(0, s.width - _btnW);
-        _noY = ny.clamp(0, s.height - _btnH);
-      });
-    }
+    final moved = ((px - _lastPx).abs() + (py - _lastPy).abs()) > 15;
+    if (!moved) return;
+
+    setState(() {
+      _lastPx = px;
+      _lastPy = py;
+      final w = s.width - _btnW;
+      final h = s.height - _btnH;
+      double nx, ny;
+      int att = 0;
+      do {
+        nx = w * (0.05 + 0.9 * _rng.nextDouble());
+        ny = h * (0.05 + 0.9 * _rng.nextDouble());
+        att++;
+      } while (att < 30 && ((nx - px).abs() + (ny - py).abs()) < 150);
+      _noX = nx.clamp(0, w);
+      _noY = ny.clamp(0, h);
+    });
   }
 }

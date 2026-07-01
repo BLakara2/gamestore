@@ -12,6 +12,7 @@ dependencies:
   mailer: ^6.4.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
